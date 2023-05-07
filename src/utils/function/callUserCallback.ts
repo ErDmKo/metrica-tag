@@ -25,7 +25,7 @@ export const callUserCallback: CallUserCallback = function z(
                 callback(...args);
             }
         }
-    } catch (error) {
+    } catch (error: any) {
         setDeferBase(ctx, bindArg(error, throwFunction), 0);
     }
 };

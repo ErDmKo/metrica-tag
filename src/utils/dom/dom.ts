@@ -239,7 +239,7 @@ export const getBoundingClientRect = (
 ): CustomDOMRect | null => {
     try {
         return element.getBoundingClientRect && element.getBoundingClientRect();
-    } catch (error) {
+    } catch (error: any) {
         if (
             typeof error === 'object' &&
             error !== null &&

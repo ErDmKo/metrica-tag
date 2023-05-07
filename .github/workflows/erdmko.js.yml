@@ -8,7 +8,52 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  perf:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16.x
+        cache: 'npm'
+    - run: npm ci --legacy-peer-deps
+    - run: |
+        echo MAIN_BRANCH_PERFOMANCE="$(npm run -s perf)" >> $GITHUB_ENV
+    - uses: actions/github-script@v6
+      with:
+        script: |
+          const result = ['## Performance info'];
+          const info = `${{ env.MAIN_BRANCH_PERFOMANCE }}`;
+          const sizeInfo = JSON.parse(info);
+          result.push(
+            '| Type | Average | Deviation |',
+            '| ---- | ------- | --------- |'
+          );
+          try {
+            for (const [ticksType, info] of Object.entries(sizeInfo)) {
+                const {
+                  average,
+                  deviation,
+                } = info;
+                result.push(`| ${[
+                    ticksType,
+                    average,
+                    deviation,
+                  ].join(' | ')} |`)
+              }
+          } catch (e) {
+            console.error(e);
+            result = ['Error', e.message, info];
+          }
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: result.join('\n')
+          })
+  size:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
@@ -20,7 +65,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
+    - run: npm ci --legacy-peer-deps
     - run: npm run build
     - name: CompressFiles
       uses: stefh/ghaction-CompressFiles@v2
@@ -31,7 +76,7 @@ jobs:
     - run: |
         echo MAIN_BRANCH="$(npm run -s size)" >> $GITHUB_ENV
     - uses: actions/checkout@v3
-    - run: npm ci
+    - run: npm ci --legacy-peer-deps
     - run: npm run lint 
     - run: npm run test:unit
     - run: npm run build
