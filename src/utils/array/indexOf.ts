@@ -22,7 +22,7 @@ export const cIndexOf = (ctx: Window) => {
     let checkIndexFn: boolean | Function = false;
     try {
         // Тест для IE 6 или старого safari (никто точно не помнит)
-        // eslint-disable-next-line
+        // @ts-ignore eslint-disable-next-line
         checkIndexFn = [].indexOf && [undefined].indexOf(undefined) === 0;
     } catch {
         // empty

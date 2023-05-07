@@ -23,13 +23,15 @@ if (!process.env.VERSION) {
 
 interface ArgOptions {
     'no-uglify'?: boolean;
+    node?: boolean;
 }
 
 const argOptions = commandLineArgs([
     { name: 'no-uglify', alias: 'u', type: Boolean },
+    { name: 'node', alias: 'n', type: Boolean },
 ]) as ArgOptions;
 
-const fileName = 'watch.js';
+const fileName = argOptions.node ? 'watch.mjs' : 'watch.js';
 const path = buildDir(`./public/${fileName}`);
 const version = 'public';
 
@@ -87,7 +89,7 @@ const inputOptions: RollupOptions = {
             transformers: [transformer],
         }),
         progress(),
-        argOptions['no-uglify']
+        argOptions['no-uglify'] || argOptions.node
             ? ''
             : compiler({
                   compilation_level: 'ADVANCED',
@@ -110,10 +112,18 @@ const inputOptions: RollupOptions = {
 };
 const outputOptions: OutputOptions = {
     file: path,
-    format: 'iife',
     freeze: false,
-    banner: 'try {',
-    footer: '} catch (e) { }',
+    ...(argOptions.node
+        ? {
+              format: 'es',
+              banner: 'export const main = (window) => {',
+              footer: '}',
+          }
+        : {
+              format: 'iife',
+              banner: 'try {',
+              footer: '} catch (e) { }',
+          }),
 };
 
 const build = async () => {
