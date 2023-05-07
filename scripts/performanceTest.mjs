@@ -46,7 +46,7 @@ const run = async () => {
   win.ym = {
     a: [[1, 'init']]
   };
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 100; i++) {
     win.ym.a.push([i + 10, 'init']);
   }
   main(win);
