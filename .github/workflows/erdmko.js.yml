@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: 'main'
     - name: Use Node.js 16.x
       uses: actions/setup-node@v3
       with:
@@ -20,32 +22,52 @@ jobs:
         cache: 'npm'
     - run: npm ci --legacy-peer-deps
     - run: |
-        echo MAIN_BRANCH_PERFOMANCE="$(npm run -s perf)" >> $GITHUB_ENV
+        echo MAIN_BRANCH_PERFORMANCE="$(npm run -s perf)" >> $GITHUB_ENV
+    - uses: actions/checkout@v3
+    - run: npm ci --legacy-peer-deps
+    - run: |
+        echo BRANCH_PERFORMANCE="$(npm run -s perf)" >> $GITHUB_ENV
     - uses: actions/github-script@v6
       with:
         script: |
-          const result = ['## Performance info'];
-          const info = `${{ env.MAIN_BRANCH_PERFOMANCE }}`;
-          const sizeInfo = JSON.parse(info);
-          result.push(
-            '| Type | Average | Deviation |',
-            '| ---- | ------- | --------- |'
-          );
+          let result = ['## Performance info'];
+          const mainInfoStr = `${{ env.MAIN_BRANCH_PERFORMANCE }}`;
+          const newInfoStr = `${{ env.BRANCH_PERFORMANCE }}`;
           try {
-            for (const [ticksType, info] of Object.entries(sizeInfo)) {
+            const mainInfo = JSON.parse(mainInfoStr);
+            const newInfo = JSON.parse(newInfoStr);
+            result.push(
+              '| Type | Average | Deviation | New average | New deviation | Avg diff |',
+              '| ---- | ------- | --------- | ----------- | ------------- | -------- |'
+            );
+            for (const [ticksType, info] of Object.entries(mainInfo)) {
                 const {
                   average,
                   deviation,
                 } = info;
+
+                const {
+                  average: new_average,
+                  deviation: new_deviation,
+                } = newInfo[ticksType];
+
                 result.push(`| ${[
                     ticksType,
-                    average,
-                    deviation,
+                    average.toFixed(0),
+                    deviation.toFixed(0),
+                    new_average.toFixed(0),
+                    new_deviation.toFixed(0),
+                    (new_average - average).toFixed(2)
                   ].join(' | ')} |`)
               }
           } catch (e) {
             console.error(e);
-            result = ['Error', e.message, info];
+            result = [
+              'Error',
+              e.message,
+              mainInfoStr,
+              newInfoStr
+            ];
           }
           await github.rest.issues.createComment({
             issue_number: context.issue.number,
@@ -60,10 +82,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         ref: 'main'
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js 16.x
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 16.x
         cache: 'npm'
     - run: npm ci --legacy-peer-deps
     - run: npm run build
