@@ -12,7 +12,8 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - name: 'Get old version'
+      uses: actions/checkout@v3
       with:
         ref: 'main'
     - name: Use Node.js 16.x
@@ -21,13 +22,17 @@ jobs:
         node-version: 16.x
         cache: 'npm'
     - run: npm ci --legacy-peer-deps
-    - run: |
+    - name: 'Run Performance test before'
+      run: |
         echo MAIN_BRANCH_PERFORMANCE="$(npm run -s perf)" >> $GITHUB_ENV
-    - uses: actions/checkout@v3
+    - name: 'Get new version'
+      uses: actions/checkout@v3
     - run: npm ci --legacy-peer-deps
-    - run: |
+    - name: 'Run Performance test after'
+      run: |
         echo BRANCH_PERFORMANCE="$(npm run -s perf)" >> $GITHUB_ENV
-    - uses: actions/github-script@v6
+    - name: Parse results
+      uses: actions/github-script@v6
       with:
         script: |
           let result = ['## Performance info'];
