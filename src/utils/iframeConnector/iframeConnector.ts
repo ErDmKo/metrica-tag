@@ -195,14 +195,13 @@ export const handleInputMessage = (
     counterInfo: CounterInfo,
     event: MessageEvent,
 ) => {
-    if (event.data[0] !== '{') {
-        return;
-    }
     let messageInfo: FullMessage | null = null;
     let meta: string | null = null;
-    const state = getIframeState(ctx);
     let message = null;
     try {
+        if (event.data[0] !== '{') {
+            return;
+        }
         messageInfo = parse(ctx, event.data) as FullMessage;
         meta = messageInfo[NAME_SPACE];
         message = messageInfo[IFRAME_MESSAGE_DATA];
@@ -223,6 +222,7 @@ export const handleInputMessage = (
     }
     const counterId = opt.id;
     const [, dateInfo, key, direction] = metaList;
+    const state = getIframeState(ctx);
     if (
         !isArray(message) &&
         message[IFRAME_MESSAGE_TYPE] &&
